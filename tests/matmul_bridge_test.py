@@ -1,5 +1,7 @@
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'python')))
 import numpy as np
-from python.bridge import matmul, matmul_bias
+from bridge import matmul, matmul_bias, bias as add_bias
 
 RTOL = 1e-4
 ATOL = 1e-5
@@ -54,6 +56,30 @@ all_passed &= check("edge N=1 [64,128] @ [128,1]", A @ B, matmul(A, B))
 A = np.random.randn(64, 1).astype(np.float32)
 B = np.random.randn(1, 32).astype(np.float32)
 all_passed &= check("edge K=1 [64,1] @ [1,32]", A @ B, matmul(A, B))
+
+# --- Test 9: basic add_bias [4,8] + [8] ---
+A = np.random.randn(4, 8).astype(np.float32)
+b = np.random.randn(8).astype(np.float32)
+expected = A + b
+all_passed &= check("add_bias [4,8] + [8]", expected, add_bias(A.copy(), b))
+
+# --- Test 10: add_bias single row M=1 ---
+A = np.random.randn(1, 16).astype(np.float32)
+b = np.random.randn(16).astype(np.float32)
+expected = A + b
+all_passed &= check("add_bias M=1 [1,16] + [16]", expected, add_bias(A.copy(), b))
+
+# --- Test 11: add_bias single col K=1 ---
+A = np.random.randn(8, 1).astype(np.float32)
+b = np.random.randn(1).astype(np.float32)
+expected = A + b
+all_passed &= check("add_bias K=1 [8,1] + [1]", expected, add_bias(A.copy(), b))
+
+# --- Test 12: add_bias large ---
+A = np.random.randn(256, 512).astype(np.float32)
+b = np.random.randn(512).astype(np.float32)
+expected = A + b
+all_passed &= check("add_bias large [256,512] + [512]", expected, add_bias(A.copy(), b))
 
 print(f"\n{'='*60}")
 print(f"{'ALL TESTS PASSED' if all_passed else 'SOME TESTS FAILED'}")
