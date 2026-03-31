@@ -44,3 +44,21 @@ void matmul_bias( const float* A, const float* B, const float* bias, float* C, i
         }
     }
 }
+
+void add_bias(const float* bias, float* output, int M, int K) {
+    for (int i = 0; i < M; i++) {
+        for (int j = 0; j < K; j++) {
+            int c_idx = INDEX(i, j, K);
+            output[c_idx] += bias[j];
+        }
+    }
+}
+
+void add_bias_row(const float* bias, float* output, int M, int K) {
+    for (int i = 0; i < M; i++) {
+        for (int j = 0; j < K; j++) {
+            int c_idx = INDEX(i, j, K);
+            output[c_idx] += bias[i];
+        }
+    }
+}

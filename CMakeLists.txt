@@ -10,7 +10,13 @@ add_executable(tensor_test
         csrc/tensor.h
         csrc/c_tests/tensor_tests.c)
 
-add_executable(matmul_test csrc/matmul.c)
+add_executable(matmul_test csrc/matmul.c
+        csrc/matmul.h)
+
+add_executable(conv2d_test csrc/conv2d.c csrc/matmul.c
+        csrc/matmul.h)
+
+add_library(cnn SHARED csrc/matmul.c csrc/conv2d.c csrc/activation.c)
 
 include(CTest)
 find_program(MEMORYCHECK_COMMAND valgrind)
