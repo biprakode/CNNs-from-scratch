@@ -9,7 +9,7 @@ class Conv2D:
         self.db = None
         self.col = None
         self.x = None
-        fan_in = C_in * KH * KW
+        self.fan_in = C_in * KH * KW
         self.weights = (np.random.randn(C_out, C_in, KH, KW) * np.sqrt(2.0 / fan_in)).astype(np.float32)
         self.bias = np.zeros(C_out, dtype=np.float32)
         self.stride = stride
@@ -22,18 +22,26 @@ class Conv2D:
         return conv2d_batch(x, self.weights, self.bias, self.stride, self.pad)
 
     def backward(self, dy):
+        N, F, H_out, W_out = dy.shape
+
         self.db = np.sum(dy , axis = (0 , 2 , 3))  # ignoring F in shape -> shape [F]
 
-        dy_flat = dy.T.reshape(dy.shape[0], -1)
-        dW_flat = dy_flat.T @ self.col
+        dy_for_dW = dy.transpose(1 , 0 , 2 , 3).reshape(F , -1)
+        dy_for_dcol = dy.transpose(0 , 2 , 3 , 1).reshape(N , -1)
+
+        dW_flat = dy_for_dW.T @ self.col.reshape(self.fan_in , -1)
+        dcol = dy_for_dcol.T @ self.weights.reshape(self.fan_in, -1)
+
+
+
         self.dW = dW_flat.reshape(self.weights.shape)
 
-        dcol = dy_flat.T @ self.weights.reshape(self.weights.shape[0], -1)
         col2im(dcol , self.x.shape , self.KH , self.KW , self.stride, self.pad)
 
 
     def _col2im(self , dcol , input_shape , kh , kw , stride, pad):
-        for()
+        N, C, H, W = input_shape
+
 
 
 
@@ -52,6 +60,9 @@ class LeakyReLU:
     def forward(self, x):
         output, self.mask = leaky_relu_forward(x, self.alpha)
         return output
+
+    def backward(self, dy):
+        return self.mask * dy
 
 class MaxPool2D:
     def __init__(self, PH, PW, stride):
@@ -77,8 +88,12 @@ class MaxPool2D:
         return output
 
     def backward(self, dy):
-        dx = np.zeros_like(self.input)
-        np.add.at(dx , self.indices ,  dy)
+        N, C, H, W = self.input.shape
+        dx = np.zeros((N , C*H*W) , dtype=np.float32)
+        idx_flat = self.indices.reshape(N, -1) # flattening parallel views
+        dy_flat = dy.reshape(N , -1)
+        np.add.at(dx , (np.arange(N)[: , None] , idx_flat), dy_flat)
+        return dx.reshape(N , C , H , W)
 
 
 class Flatten:
