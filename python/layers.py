@@ -2,7 +2,6 @@ import numpy as np
 
 from bridge import conv2d_batch, im2col, relu_forward, leaky_relu_forward, maxpool2d_forward, matmul_bias
 
-
 def col2im(dcol, input_shape, KH, KW, stride, pad):
     # Inverse of im2col: scatter each row of dcol back into the input-gradient
     # tensor. Overlapping patches MUST accumulate (+=). Using = would silently
